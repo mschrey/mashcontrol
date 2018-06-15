@@ -1,0 +1,8 @@
+# Maischprogramm fuer ipa_amarillo
+# created by Maischcontroller web frontend on 2018-03-06
+# Example mash step file
+Einmaischen, 57, 0
+Eiweissrast, 57, 10
+Maltoserast, 64, 60
+Verzuckerungsrast, 72, 20
+Abmaischen, 78, 0
