@@ -16,9 +16,9 @@
 // Version 0.4: improved control loop algorithm for low air temperatures
 //              (maische would not reach 78°C)
 // 2018-04-14
-// introduced maische step file (.msf)
-// file name requested as argument (without extension) is input file name
-//   for maische step definition (*.msf) and output log file (*.log)
+// Version 0.5: introduced maische step file (.msf)
+//              file name requested as argument (without extension) is input file name
+//              for maische step definition (*.msf) and output log file (*.log)
 
 // compile with wiringPi (gcc mashcontrol.c -o mashcontrol -lwiringPi)
 
@@ -309,8 +309,6 @@ void Rast_wait(struct listitem *currentRast)
             }
         } else {
             //parent process, pid contains child pid
-            //char str[20];
-            //fgets(str, 19, stdin);
             printf("waiting for SIGUSR1\n");
             while(WAIT_REQUIRED == 1) {}
             kill(pid, SIGTERM);
@@ -339,7 +337,6 @@ char * parse_args(int argc, char *argv[], char *fileout)
         printf("Error! Too few arguments! Remember to pass desired output logfile name!\n");
         exit(-1);
     } else {
-        //fileout = (char*)malloc(strlen(argv[1]));
         strcpy(fileout, argv[1]);
     }
     return fileout;
@@ -349,7 +346,7 @@ char * parse_args(int argc, char *argv[], char *fileout)
 void cleanup(int a) {
     printf("CTRL-C caught, exiting...\n");
     fflush(NULL);  //flush all open files
-    setHeizungStatus("OFF");  //turn off header
+    setHeizungStatus("OFF");  //turn off heater
     digitalWrite(BUZZER, 0);  //turn off buzzer
     exit(0);
 }
