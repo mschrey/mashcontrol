@@ -9,6 +9,11 @@
 // Version 0.2: maischcontroller forks while waiting for user input
 //              automatic logging
 //              reduced duplicate control code
+// 2017-11-26
+// included buzzer support to request user interaction
+// cleanup function for graceful exiting on ctrl-C
+
+// compile with wiringPi (gcc maischcontroller_v13.c -o maischcontroller -lwiringPi)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +22,9 @@
 //#include <termios.h> //for stdin_set
 #include <sys/types.h>
 #include <signal.h>    //for SIGTERM
+#include <wiringPi.h>  //for digitalwrite
+
+#define BUZZER 1  //buzzer is connected to GPIO1 (wiringPi pin numbering)
 
 const char SENSOR1[50]     = "/sys/bus/w1/devices/10-000802f7cdae/w1_slave";
 const char SENSOR2[50]     = "/sys/bus/w1/devices/10-000802f89e49/w1_slave";
@@ -39,7 +47,7 @@ const double Kp     = 3;
 const double Kd     = 5;
 const double memFac = 0.2;
 
-// Filter buffer
+// Filter buffer for D-controller
 double ePrev = 0;
 
 
@@ -197,7 +205,7 @@ double Rast_regulate( double RastTemperature )
 	double uVirt = e * Kp + Kd * ( e - eFilt );
 
 	// Actuate!
-	if( uVirt >= 0.5 )
+	if( uVirt > 0.5 )
 		setHeizungStatus("ON");
 	else
 		setHeizungStatus("OFF");
@@ -241,6 +249,9 @@ void Rast_wait(struct listitem *currentRast)
                 currentTemp = Rast_regulate(RastTemperature);
                 print_info(starttime, currentRast, currentTemp);
                 printf("Temperature reached, %s then press <Enter> to continue\n", currentRast->action);
+                digitalWrite(BUZZER, 1);
+                usleep(2 * 1000000);
+                digitalWrite(BUZZER, 0);
                 usleep(TIMEOUT_RAST_WAIT * 1000000);    //wait TIMEOUT_RAST_WAIT seconds
             }
         } else {
@@ -276,11 +287,32 @@ char * parse_args(int argc, char *argv[], char *fileout)
     return fileout;
 }
 
+
+void cleanup(int a) {
+    printf("CTRL-C caught, exiting...\n");
+    fflush(NULL);  //flush all open files
+    setHeizungStatus("OFF");  //turn off header
+    digitalWrite(BUZZER, 0);  //turn off buzzer
+    exit(0);
+}
+
+
 int main(int argc, char *argv[]) 
 {
     time_t starttime;
     char time_string [80];
     char str[10] = "";
+    
+    //Setup interrupt handler to catch strg+C
+    struct sigaction act;
+    act.sa_handler = cleanup;
+    sigaction(SIGINT, &act, NULL);
+    
+    //init gpio
+    if (wiringPiSetup() == -1)
+       printf("failed to setup!\n");
+    pinMode(BUZZER, OUTPUT);
+    
     FILEOUT = parse_args(argc, argv, FILEOUT);
     printf("output file name is %s\n", FILEOUT);
     FILE * fp;
@@ -291,11 +323,11 @@ int main(int argc, char *argv[])
 
     struct listitem * head = NULL; 
 
-    head = create(65, 0, "Einmaischen");
-    push(head, 55, 20, "Eiweissrast");
-    push(head, 63, 15, "Maltoserast");
-    push(head, 75, 0, "Verzuckerungsrast");
-//    push(head, 78,  0, "Abmaischen");
+    head = create(60, 0, "Einmaischen");
+    push(head, 57, 10, "Eiweissrast");
+    push(head, 63, 45, "Maltoserast");
+    push(head, 73, 20, "Verzuckerungsrast");
+    push(head, 78,  0, "Abmaischen");
     printlist(head);
 
     printf("\n\nstarting Maische Process\n");
@@ -310,4 +342,8 @@ int main(int argc, char *argv[])
 
         currentRast = currentRast->next;
     }
+    
+    // Heater off
+    setHeizungStatus("OFF");
+    
 }
