@@ -10,10 +10,13 @@
 //              automatic logging
 //              reduced duplicate control code
 // 2017-11-26
-// included buzzer support to request user interaction
-// cleanup function for graceful exiting on ctrl-C
+// Version 0.3: included buzzer support to request user interaction
+//              cleanup function for graceful exiting on ctrl-C
+// 2018-03-30
+// Version 0.4: improved control loop algorithm for low air temperatures
+//              (maische would not reach 78°C)
 
-// compile with wiringPi (gcc maischcontroller_v13.c -o maischcontroller -lwiringPi)
+// compile with wiringPi (gcc mashcontrol.c -o mashcontrol -lwiringPi)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -193,29 +196,33 @@ double Rast_regulate(double RastTemperature)
 double Rast_regulate( double RastTemperature )
 {
     // Get plant output
-	double y = get_temp( SENSOR4 ) / 1000;
+    double y = get_temp( SENSOR4 ) / 1000;
 
-	// Calculate control error
-	double e = RastTemperature - y;
+    // Calculate control error
+    double e = RastTemperature - y;
 
-	// Calculate filtered control error
-	double eFilt = e * (1 - memFac ) + ePrev * memFac;
+    // Calculate filtered control error
+    double eFilt = e * (1 - memFac ) + ePrev * memFac;
 
-	// Calculate virtual plant input
-	double uVirt = e * Kp + Kd * ( e - eFilt );
+    // Calculate virtual plant input
+    double uVirt = e * Kp + Kd * ( e - eFilt );
 
-	// Actuate!
-	if( uVirt > 0.5 )
-		setHeizungStatus("ON");
-	else
-		setHeizungStatus("OFF");
+    // Calculate adaptive activation threshold
+    double uThreshold = -0.006667 * RastTemperature + 0.83336;
 
-	// Save filtered error
-	ePrev = eFilt;
+    // Actuate!
+    if( uVirt > uThreshold )
+        setHeizungStatus("ON");
+    else
+        setHeizungStatus("OFF");
 
-	// Return current temperature
+    // Save filtered error
+    ePrev = eFilt;
+
+    // Return current temperature
     return y;
 }
+
 
 
 void Rast_heatup(struct listitem *currentRast)
