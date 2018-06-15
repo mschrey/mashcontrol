@@ -15,6 +15,10 @@
 // 2018-03-30
 // Version 0.4: improved control loop algorithm for low air temperatures
 //              (maische would not reach 78°C)
+// 2018-04-14
+// introduced maische step file (.msf)
+// file name requested as argument (without extension) is input file name
+//   for maische step definition (*.msf) and output log file (*.log)
 
 // compile with wiringPi (gcc mashcontrol.c -o mashcontrol -lwiringPi)
 
@@ -38,6 +42,8 @@ const char COMMAND_ON[100]  = "/home/pi/raspberry-remote/send 11001 1 1 >> /home
 const char COMMAND_OFF[100] = "/home/pi/raspberry-remote/send 11001 1 0 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
 
 char * FILEOUT;
+int WAIT_REQUIRED = 0;
+int TEMP = 20;
 
 char heaterStatus[] = "OFF";
 const int HYSTERESIS = 2;
@@ -132,7 +138,15 @@ double get_temp(const char * sensor)
         printf("sensor %s not found\n", sensor);
         return -1000;
     }
-
+    
+/*
+    //simulate heating for testing purposes
+    if(strcmp(heaterStatus, " ON") == 0) 
+        TEMP += 6;
+    else
+        TEMP -= 3;
+    return TEMP * 1000;
+*/
 }
 
 
@@ -173,6 +187,36 @@ void print_info(time_t starttime, struct listitem *currentRast, double currentTe
     FILE * fp = fopen(FILEOUT, "a");
     fprintf(fp, "%s: %s, %5.2f, %5.2f, %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
     fclose(fp);
+}
+
+
+struct listitem * read_maische_steps(char * filename, struct listitem * head)
+{
+    printf("reading from %s\n", filename);
+    FILE * filep = fopen(filename, "r");
+    char rastline[100];
+    char rast_name[30];
+    char * pch;
+    int rast_temp = 0;
+    int rast_duration = 0;
+    while(fgets(rastline, 100, filep) != NULL) {
+        if(rastline[0] != '#') {
+            pch = strtok(rastline, ", ");
+            strcpy(rast_name, pch);
+            pch = strtok(NULL, ", ");
+            rast_temp = atoi(pch);
+            pch = strtok(NULL, ", ");
+            rast_duration = atoi(pch);
+            printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
+            if(head == NULL)
+                head = create(rast_temp, rast_duration, rast_name);
+            else
+                push(head, rast_temp, rast_duration, rast_name);
+        } else {
+            printf("comment found\n");
+        }
+    }
+    return head;
 }
 
 /*
@@ -224,7 +268,6 @@ double Rast_regulate( double RastTemperature )
 }
 
 
-
 void Rast_heatup(struct listitem *currentRast)
 {
     double RastTemperature = currentRast->temperature;
@@ -249,6 +292,7 @@ void Rast_wait(struct listitem *currentRast)
 
     double currentTemp;
     if (RastDuration == 0) {   //no fixed duration. wait for user interaction
+        WAIT_REQUIRED = 1;
         pid_t pid = fork();
         if (pid == 0) {
             //child process
@@ -259,13 +303,18 @@ void Rast_wait(struct listitem *currentRast)
                 digitalWrite(BUZZER, 1);
                 usleep(2 * 1000000);
                 digitalWrite(BUZZER, 0);
+                fflush(NULL);  //flush all open files
+                fflush(stdout);
                 usleep(TIMEOUT_RAST_WAIT * 1000000);    //wait TIMEOUT_RAST_WAIT seconds
             }
         } else {
             //parent process, pid contains child pid
-            char str[20];
-            fgets(str, 19, stdin);
+            //char str[20];
+            //fgets(str, 19, stdin);
+            printf("waiting for SIGUSR1\n");
+            while(WAIT_REQUIRED == 1) {}
             kill(pid, SIGTERM);
+            digitalWrite(BUZZER, 0);
         }
     } else {
         char time_string [80];
@@ -276,6 +325,8 @@ void Rast_wait(struct listitem *currentRast)
             currentRastDuration = get_time(time_string, starttime)/60;
             print_info(starttime, currentRast, currentTemp);
             printf("Noch %2d von %2dmin\n", RastDuration-currentRastDuration, RastDuration);
+            fflush(NULL);  //flush all open files
+            fflush(stdout);
             usleep(TIMEOUT_RAST_WAIT*1000000);      //wait TIMEOUT_RAST_WAIT second
         } while(currentRastDuration < RastDuration);
     }
@@ -288,7 +339,7 @@ char * parse_args(int argc, char *argv[], char *fileout)
         printf("Error! Too few arguments! Remember to pass desired output logfile name!\n");
         exit(-1);
     } else {
-        fileout = (char*)malloc(strlen(argv[1]));
+        //fileout = (char*)malloc(strlen(argv[1]));
         strcpy(fileout, argv[1]);
     }
     return fileout;
@@ -304,6 +355,12 @@ void cleanup(int a) {
 }
 
 
+
+void cont_maische_step(int b)
+{
+    printf("caught SIGUSR1, continuing maische steps...\n");
+    WAIT_REQUIRED = 0;
+}
 int main(int argc, char *argv[]) 
 {
     time_t starttime;
@@ -315,26 +372,48 @@ int main(int argc, char *argv[])
     act.sa_handler = cleanup;
     sigaction(SIGINT, &act, NULL);
     
+    //setup interrupt handler to continue after user interaction
+    struct sigaction act2;
+    act2.sa_handler = cont_maische_step;
+    sigaction(SIGUSR1, &act2, NULL);
+    
     //init gpio
     if (wiringPiSetup() == -1)
        printf("failed to setup!\n");
     pinMode(BUZZER, OUTPUT);
     
-    FILEOUT = parse_args(argc, argv, FILEOUT);
+    //defining filebase
+    char * filebase = (char*)malloc(100);
+    filebase = parse_args(argc, argv, filebase);
+
+    //defining FILEOUT
+    FILEOUT = (char*)malloc(100);
+    strcpy(FILEOUT, filebase);
+    strcat(FILEOUT, ".log");
     printf("output file name is %s\n", FILEOUT);
+
+    //defining maische step file
+    char * maische_step_file = (char*)malloc(100);
+    strcpy(maische_step_file, filebase);
+    strcat(maische_step_file, ".msf");
+    printf("maische step file is %s\n", maische_step_file);
+
     FILE * fp;
     fp = fopen(FILEOUT, "w");
     fprintf(fp, "Date/Time: Rast, Soll (°C), Ist (°C), Heizung?\n");
 
 
-
     struct listitem * head = NULL; 
 
-    head = create(60, 0, "Einmaischen");
-    push(head, 57, 10, "Eiweissrast");
-    push(head, 63, 45, "Maltoserast");
-    push(head, 73, 20, "Verzuckerungsrast");
-    push(head, 78,  0, "Abmaischen");
+//    head = create(60, 0, "Einmaischen");
+//    push(head, 57, 10, "Eiweissrast");
+//    push(head, 63, 45, "Maltoserast");
+//    push(head, 73, 20, "Verzuckerungsrast");
+//    push(head, 78,  0, "Abmaischen");
+
+
+
+    head = read_maische_steps(maische_step_file, head);
     printlist(head);
 
     printf("\n\nstarting Maische Process\n");
