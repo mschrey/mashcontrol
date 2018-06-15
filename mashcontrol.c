@@ -29,6 +29,7 @@
 //#include <termios.h> //for stdin_set
 #include <sys/types.h>
 #include <signal.h>    //for SIGTERM
+#include <unistd.h>    //for fork and usleep
 #include <wiringPi.h>  //for digitalwrite
 
 #define BUZZER 1  //buzzer is connected to GPIO1 (wiringPi pin numbering)
