@@ -5,12 +5,18 @@
 // **********************************************
 // 2017-08-17
 // Version 0.1: Initial
+// 2017-08-27
+// Version 0.2: maischcontroller forks while waiting for user input
+//              automatic logging
+//              reduced duplicate control code
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  //for strcpy
 #include <time.h>
-#include <termios.h> //for stdin_set
+//#include <termios.h> //for stdin_set
+#include <sys/types.h>
+#include <signal.h>    //for SIGTERM
 
 const char SENSOR1[50]     = "/sys/bus/w1/devices/10-000802f7cdae/w1_slave";
 const char SENSOR2[50]     = "/sys/bus/w1/devices/10-000802f89e49/w1_slave";
@@ -20,13 +26,22 @@ const char SENSOR4[50]     = "/sys/bus/w1/devices/28-0316a4a4eaff/w1_slave";  //
 const char COMMAND_ON[100]  = "/home/pi/raspberry-remote/send 11001 1 1 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
 const char COMMAND_OFF[100] = "/home/pi/raspberry-remote/send 11001 1 0 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
 
-
+char * FILEOUT;
 
 char heaterStatus[] = "OFF";
 const int HYSTERESIS = 2;
 
 const int TIMEOUT_RAST_WAIT = 10;
 const int TIMEOUT_RAST_HEATUP = 10;
+
+// Definitions for controller
+const double Kp     = 3;
+const double Kd     = 5;
+const double memFac = 0.2;
+
+// Filter buffer
+double ePrev = 0;
+
 
 struct listitem {
     double temperature;
@@ -136,20 +151,62 @@ void setHeizungStatus(const char * status)
 }
 
 
-//from https://stackoverflow.com/questions/448944/c-non-blocking-keyboard-input
-void stdin_set(int cmd)
+void print_info(time_t starttime, struct listitem *currentRast, double currentTemp)
 {
-    struct termios t;
-    tcgetattr(1,&t);
-    switch (cmd) {
-    case 1:
-            t.c_lflag &= ~ICANON;
-            break;
-    default:
-            t.c_lflag |= ICANON;
-            break;
-    }
-    tcsetattr(1,0,&t);
+    char time_string [80];
+    get_time(time_string, starttime);
+    double RastTemperature = currentRast->temperature;
+    long RastDuration = (long)currentRast->duration;
+    char *RastAction = currentRast->action;
+    printf("%s: %s, Soll: %5.2f°C, Ist: %5.2f°C, Heizung: %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
+    FILE * fp = fopen(FILEOUT, "a");
+    fprintf(fp, "%s: %s, %5.2f, %5.2f, %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
+    fclose(fp);
+}
+
+/*
+//this executes one control step, e.g. turns heater on or off
+//input is desired temperature, output is actual temperature
+double Rast_regulate(double RastTemperature)
+{
+    double currentTemp = get_temp(SENSOR4)/1000;
+    //double currentTemp = get_temp(SENSOR1)/1000;
+    if(currentTemp < (RastTemperature-HYSTERESIS))
+        setHeizungStatus("ON");
+    else if(currentTemp > RastTemperature)
+        setHeizungStatus("OFF");
+    return currentTemp;
+}
+*/
+
+// Bang bang PD controller
+// Executes one control step, returns current temperature
+// Designed for a sample time of 11 seconds
+double Rast_regulate( double RastTemperature )
+{
+    // Get plant output
+	double y = get_temp( SENSOR4 ) / 1000;
+
+	// Calculate control error
+	double e = RastTemperature - y;
+
+	// Calculate filtered control error
+	double eFilt = e * (1 - memFac ) + ePrev * memFac;
+
+	// Calculate virtual plant input
+	double uVirt = e * Kp + Kd * ( e - eFilt );
+
+	// Actuate!
+	if( uVirt >= 0.5 )
+		setHeizungStatus("ON");
+	else
+		setHeizungStatus("OFF");
+
+	// Save filtered error
+	ePrev = eFilt;
+
+	// Return current temperature
+    return y;
 }
 
 
@@ -157,17 +214,14 @@ void Rast_heatup(struct listitem *currentRast)
 {
     double RastTemperature = currentRast->temperature;
     long RastDuration = (long)currentRast->duration;
-    char time_string [80];
     time_t starttime;
 
-    double currentTemp = get_temp(SENSOR4)/1000;
-    while(currentTemp < RastTemperature) {
-        setHeizungStatus("ON");
-        get_time(time_string, starttime);
-        printf("%s: Hochheizen, Soll: %5.2f°C, Ist: %5.2f°C\n", time_string, RastTemperature, currentTemp);
+    double currentTemp;
+    do {
+        currentTemp = Rast_regulate(RastTemperature);
+        print_info(starttime, currentRast, currentTemp);
         usleep(TIMEOUT_RAST_HEATUP*1000000);    //wait TIMEOUT_RAST_HEATUP second
-        currentTemp = get_temp(SENSOR4)/1000;
-    }
+    } while(currentTemp < RastTemperature);
     setHeizungStatus("OFF");
 }
 
@@ -176,76 +230,72 @@ void Rast_wait(struct listitem *currentRast)
 {
     double RastTemperature = currentRast->temperature;
     long RastDuration = (long)currentRast->duration;
-    char time_string [80];
     time_t starttime;
 
-    double currentTemp = get_temp(SENSOR4)/1000;
+    double currentTemp;
     if (RastDuration == 0) {   //no fixed duration. wait for user interaction
-        printf("Temperature reached. %s, then press <Enter> to continue\n", currentRast->action);
-
-        fd_set readfds;
-        struct timeval tv;
-        FD_ZERO(&readfds);
-        FD_SET(0, &readfds); /* set the stdin in the set of file descriptors to be selected */
-        tv.tv_sec = 0;
-        tv.tv_usec = 500000;
-        stdin_set(1);
-
-        while(1)
-        {
-            if(currentTemp < (RastTemperature-HYSTERESIS))
-                setHeizungStatus("ON");
-            else if(currentTemp > RastTemperature)
-                setHeizungStatus("OFF");
-            currentTemp = get_temp(SENSOR4)/1000;
-            printf("Soll: %5.2f, Ist: %5.2f, Heizung=%s\n", heaterStatus, RastTemperature, currentTemp);
-            printf("Temperature reached. %s, then press <Enter> to continue\n", currentRast->action);
-
-            FD_ZERO(&readfds);
-            FD_SET(0, &readfds);
-            tv.tv_sec = 0;
-            tv.tv_usec = 1000000;            
-            int retval = select(1, &readfds, NULL, NULL, &tv);
-            if (retval) 
-                break;
+        pid_t pid = fork();
+        if (pid == 0) {
+            //child process
+            while(1) {
+                currentTemp = Rast_regulate(RastTemperature);
+                print_info(starttime, currentRast, currentTemp);
+                printf("Temperature reached, %s then press <Enter> to continue\n", currentRast->action);
+                usleep(TIMEOUT_RAST_WAIT * 1000000);    //wait TIMEOUT_RAST_WAIT seconds
+            }
+        } else {
+            //parent process, pid contains child pid
+            char str[20];
+            fgets(str, 19, stdin);
+            kill(pid, SIGTERM);
         }
-        stdin_set(0);
     } else {
+        char time_string [80];
         time(&starttime);  // get current time; same as: timer = time(NULL)  
-        long currentRastDuration = get_time(time_string, starttime)/60;
-        //printf("currentRastDuration: %ld\n", currentRastDuration);
-        //printf("get_time(): %ld\n", get_time(time_string, starttime));
-        //printf("get_time()/60: %ld\n", get_time(time_string, starttime)/60);
-        currentTemp = get_temp(SENSOR4)/1000;
-        while(currentRastDuration < RastDuration) {
-            if(currentTemp < (RastTemperature-HYSTERESIS))
-                setHeizungStatus("ON");
-            else if(currentTemp > RastTemperature)
-                setHeizungStatus("OFF");
-            printf("%s: Rast, Noch %2d von %2dmin, Heizung=%s, Soll: %5.2f°C, Ist: %5.2f°C\n", time_string, RastDuration-currentRastDuration, RastDuration, heaterStatus, RastTemperature, currentTemp);
-            usleep(TIMEOUT_RAST_WAIT*1000000);      //wait TIMEOUT_RAST_WAIT second
+        long currentRastDuration;
+        do {
+            currentTemp = Rast_regulate(RastTemperature);
             currentRastDuration = get_time(time_string, starttime)/60;
-            currentTemp = get_temp(SENSOR4)/1000;
-        }
+            print_info(starttime, currentRast, currentTemp);
+            printf("Noch %2d von %2dmin\n", RastDuration-currentRastDuration, RastDuration);
+            usleep(TIMEOUT_RAST_WAIT*1000000);      //wait TIMEOUT_RAST_WAIT second
+        } while(currentRastDuration < RastDuration);
     }
 }
 
 
-int main(void) 
+char * parse_args(int argc, char *argv[], char *fileout)
+{
+    if (argc != 2) {
+        printf("Error! Too few arguments! Remember to pass desired output logfile name!\n");
+        exit(-1);
+    } else {
+        fileout = (char*)malloc(strlen(argv[1]));
+        strcpy(fileout, argv[1]);
+    }
+    return fileout;
+}
+
+int main(int argc, char *argv[]) 
 {
     time_t starttime;
     char time_string [80];
     char str[10] = "";
+    FILEOUT = parse_args(argc, argv, FILEOUT);
+    printf("output file name is %s\n", FILEOUT);
+    FILE * fp;
+    fp = fopen(FILEOUT, "w");
+    fprintf(fp, "Date/Time: Rast, Soll (°C), Ist (°C), Heizung?\n");
+
+
 
     struct listitem * head = NULL; 
 
-    //globaltemp = 20;
-    
-    head = create(55, 0, "Einmaischen");
-    push(head, 52, 10, "Eiweissrast");
-    push(head, 63, 40, "Maltoserast");
-    push(head, 72, 10, "Verzuckerungsrast");
-    push(head, 74,  0, "Abmaischen");
+    head = create(65, 0, "Einmaischen");
+    push(head, 55, 20, "Eiweissrast");
+    push(head, 63, 15, "Maltoserast");
+    push(head, 75, 0, "Verzuckerungsrast");
+//    push(head, 78,  0, "Abmaischen");
     printlist(head);
 
     printf("\n\nstarting Maische Process\n");
