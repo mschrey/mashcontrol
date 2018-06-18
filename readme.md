@@ -9,9 +9,11 @@
 ``sudo apt-get install build-essential gcc git wiringpi apache2 php``
 
 ## Installation ##
-``git clone https://github.com/mschrey/mashcontrol.git``
-``git clone https://github.com/xkonni/raspberry-remote``
-``gcc mashcontrol.c -o mashcontrol -lwiringPi``
+```
+git clone https://github.com/mschrey/mashcontrol.git
+git clone https://github.com/xkonni/raspberry-remote
+gcc mashcontrol.c -o mashcontrol -lwiringPi
+```
 
 
 ## Information ##
