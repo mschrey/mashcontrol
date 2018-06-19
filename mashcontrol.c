@@ -1,12 +1,12 @@
 // **********************************************
 // *                                            *
-// *            Maischcontroller                *
+// *               Mashcontrol                  *
 // *                                            *
 // **********************************************
 // 2017-08-17
 // Version 0.1: Initial
 // 2017-08-27
-// Version 0.2: maischcontroller forks while waiting for user input
+// Version 0.2: mashcontrol forks while waiting for user input
 //              automatic logging
 //              reduced duplicate control code
 // 2017-11-26
@@ -14,11 +14,11 @@
 //              cleanup function for graceful exiting on ctrl-C
 // 2018-03-30
 // Version 0.4: improved control loop algorithm for low air temperatures
-//              (maische would not reach 78°C)
+//              (mash would not reach 78°C)
 // 2018-04-14
-// Version 0.5: introduced maische step file (.msf)
+// Version 0.5: introduced mash step file (.msf)
 //              file name requested as argument (without extension) is input file name
-//              for maische step definition (*.msf) and output log file (*.log)
+//              for mash step definition (*.msf) and output log file (*.log)
 
 // compile with wiringPi (gcc mashcontrol.c -o mashcontrol -lwiringPi)
 
@@ -191,7 +191,7 @@ void print_info(time_t starttime, struct listitem *currentRast, double currentTe
 }
 
 
-struct listitem * read_maische_steps(char * filename, struct listitem * head)
+struct listitem * read_mash_steps(char * filename, struct listitem * head)
 {
     printf("reading from %s\n", filename);
     FILE * filep = fopen(filename, "r");
@@ -354,9 +354,9 @@ void cleanup(int a) {
 
 
 
-void cont_maische_step(int b)
+void cont_mash_step(int b)
 {
-    printf("caught SIGUSR1, continuing maische steps...\n");
+    printf("caught SIGUSR1, continuing mash steps...\n");
     WAIT_REQUIRED = 0;
 }
 int main(int argc, char *argv[]) 
@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
     
     //setup interrupt handler to continue after user interaction
     struct sigaction act2;
-    act2.sa_handler = cont_maische_step;
+    act2.sa_handler = cont_mash_step;
     sigaction(SIGUSR1, &act2, NULL);
     
     //init gpio
@@ -390,11 +390,11 @@ int main(int argc, char *argv[])
     strcat(FILEOUT, ".log");
     printf("output file name is %s\n", FILEOUT);
 
-    //defining maische step file
-    char * maische_step_file = (char*)malloc(100);
-    strcpy(maische_step_file, filebase);
-    strcat(maische_step_file, ".msf");
-    printf("maische step file is %s\n", maische_step_file);
+    //defining mash step file
+    char * mash_step_file = (char*)malloc(100);
+    strcpy(mash_step_file, filebase);
+    strcat(mash_step_file, ".msf");
+    printf("mash step file is %s\n", mash_step_file);
 
     FILE * fp;
     fp = fopen(FILEOUT, "w");
@@ -411,10 +411,10 @@ int main(int argc, char *argv[])
 
 
 
-    head = read_maische_steps(maische_step_file, head);
+    head = read_mash_steps(mash_step_file, head);
     printlist(head);
 
-    printf("\n\nstarting Maische Process\n");
+    printf("\n\nstarting mash Process\n");
 
     struct listitem *currentRast = head;
     while(currentRast != NULL) {
