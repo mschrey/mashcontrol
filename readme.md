@@ -26,7 +26,7 @@ git clone https://github.com/mschrey/mashcontrol.git
 git clone https://github.com/xkonni/raspberry-remote
 ```
 manually change path to temperature sensor device file  
-add "dtoverlay=w1-gpio,gpiopin=4" to /boot/config.txt
+add `dtoverlay=w1-gpio,gpiopin=4` to `/boot/config.txt`
 ```
 cd mashcontrol
 make
