@@ -182,7 +182,7 @@ void print_info(time_t starttime, struct listitem *currentRast, double currentTe
     char time_string [80];
     get_time(time_string, starttime);
     double RastTemperature = currentRast->temperature;
-    long RastDuration = (long)currentRast->duration;
+//    long RastDuration = (long)currentRast->duration;
     char *RastAction = currentRast->action;
     printf("%s: %s, Soll: %5.2f°C, Ist: %5.2f°C, Heizung: %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
     FILE * fp = fopen(FILEOUT, "a");
@@ -272,9 +272,10 @@ double Rast_regulate( double RastTemperature )
 void Rast_heatup(struct listitem *currentRast)
 {
     double RastTemperature = currentRast->temperature;
-    long RastDuration = (long)currentRast->duration;
+//    long RastDuration = (long)currentRast->duration;
     time_t starttime;
-
+    time(&starttime);
+    
     double currentTemp;
     do {
         currentTemp = Rast_regulate(RastTemperature);
@@ -290,7 +291,8 @@ void Rast_wait(struct listitem *currentRast)
     double RastTemperature = currentRast->temperature;
     long RastDuration = (long)currentRast->duration;
     time_t starttime;
-
+    time(&starttime);
+    
     double currentTemp;
     if (RastDuration == 0) {   //no fixed duration. wait for user interaction
         WAIT_REQUIRED = 1;
@@ -323,7 +325,7 @@ void Rast_wait(struct listitem *currentRast)
             currentTemp = Rast_regulate(RastTemperature);
             currentRastDuration = get_time(time_string, starttime)/60;
             print_info(starttime, currentRast, currentTemp);
-            printf("Noch %2d von %2dmin\n", RastDuration-currentRastDuration, RastDuration);
+            printf("Noch %2ld von %2ldmin\n", RastDuration-currentRastDuration, RastDuration);
             fflush(NULL);  //flush all open files
             fflush(stdout);
             usleep(TIMEOUT_RAST_WAIT*1000000);      //wait TIMEOUT_RAST_WAIT second
@@ -361,9 +363,6 @@ void cont_mash_step(int b)
 }
 int main(int argc, char *argv[]) 
 {
-    time_t starttime;
-    char time_string [80];
-    char str[10] = "";
     
     //Setup interrupt handler to catch strg+C
     struct sigaction act;
