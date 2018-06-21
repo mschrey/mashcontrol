@@ -12,7 +12,7 @@ Mashcontrol is run on a Raspberry Pi (any model). It reads the mash tun temperat
  * Connect VCC of temperature sensor to Raspberry Pin 1 (3.3V)
  * Gonnect Data of temperature sensor to Raspberry Pin 7 (GPIO 4)
  * Connect GND of temperature sensor to Raspberry Pin 6 (GND)
- * Connect 4,7kOhm resistor between VCC and Data
+ * Connect 4,7kOhm resistor between DS18S20 VCC and DS18S20 Data
  * Connect VCC of radio transmitter to Raspberry Pin 4 (5V)
  * Connect DATA of radio transmitter to Raspberry Pin 11 (GPIO 17)
  * Connecto GND of radio transmitter to Raspberry Pin 6 (GND)
@@ -25,7 +25,7 @@ Mashcontrol is run on a Raspberry Pi (any model). It reads the mash tun temperat
 git clone https://github.com/mschrey/mashcontrol.git
 git clone https://github.com/xkonni/raspberry-remote
 ```
-manually change path to temperature sensor device file
+manually change path to temperature sensor device file  
 add "dtoverlay=w1-gpio,gpiopin=4" to /boot/config.txt
 ```
 cd mashcontrol
@@ -45,6 +45,6 @@ As of version v0.5, it is not necessary anymore to define the mash steps in the 
   
 
 ## Troubleshooting ##
- * Sensors cannot be found
-Check `/sys/bus/w1/devices` if temperature sensor is properly recognized. 
+ * Sensors cannot be found  
+Check `/sys/bus/w1/devices` if temperature sensor is properly recognized.  
 `cat /sys/bus/w1/devices/10-000802bf634d/w1_slave` can be used to check for proper temperature data
