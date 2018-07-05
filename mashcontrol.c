@@ -31,6 +31,7 @@
 #include <signal.h>    //for SIGTERM
 #include <unistd.h>    //for fork and usleep
 #include <wiringPi.h>  //for digitalwrite
+#include "mashsteplist.h"
 
 #define BUZZER 1  //buzzer is connected to GPIO1 (wiringPi pin numbering)
 
@@ -61,62 +62,7 @@ const double memFac = 0.2;
 double ePrev = 0;
 
 
-struct listitem {
-    double temperature;
-    int duration;
-    char * action;
-    struct listitem * next;
-};
 
-
-struct listitem * create(double temperature, int duration, char * action)
-{
-    struct listitem * head = malloc(sizeof(struct listitem));
-    head->temperature = temperature;
-    head->duration = duration;
-    head->action = malloc(strlen(action)+1);
-    strcpy(head->action, action);
-    head->next = NULL;
-    return head;
-}
-
-
-void push(struct listitem *head, double temperature, int duration, char * action)
-{
-    struct listitem *new = malloc(sizeof(struct listitem));
-    new->temperature = temperature;
-    new->duration = duration;
-    new->action = malloc(strlen(action)+1);
-    strcpy(new->action, action);
-    new->next = NULL;
-    //iterate to end of list
-    struct listitem *current = head;
-    while(current->next != NULL) {
-        current = current->next;
-    }
-    current->next = new;
-}
-
-
-void printRast(struct listitem *currentRast)
-{
-    printf("========new Rast==============\n");
-    printf("Temperature: %2.0f°C\n", currentRast->temperature);
-    printf("Duration: %dmin\n", currentRast->duration);
-    printf("Action: %s\n", currentRast->action);
-    printf("==============================\n");
-}
-
-
-void printlist(struct listitem * head)
-{
-    struct listitem *current = head;
-    while(current != NULL) {
-        printRast(current);
-        current = current->next;
-    }
-
-}
 
 
 double get_temp(const char * sensor)
