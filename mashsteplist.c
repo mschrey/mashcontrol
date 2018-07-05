@@ -2,12 +2,7 @@
 #include <stdlib.h>
 #include "mashsteplist.h"
 
-struct listitem {
-    double temperature;
-    int duration;
-    char * action;
-    struct listitem * next;
-};
+
 
 
 struct listitem * create(double temperature, int duration, char * action)
