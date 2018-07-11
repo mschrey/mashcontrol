@@ -42,7 +42,8 @@ As of version v0.5, it is not necessary anymore to define the mash steps in the 
   * Read mash steps from maischemalzundmehr.de json files (in preparation)
   * Include RCSwitch.cpp in mashcontrol.c to directly control outlets without having to start `send` binary.
   * Beautify web front end, possibly including live plotting of temperature. 
-  
+  * Automatically detect temperature sensor (no more hardcoding)
+
 
 ## Troubleshooting ##
  * Sensors cannot be found  
