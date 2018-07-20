@@ -26,15 +26,16 @@
 #include <stdlib.h>
 #include <string.h>  //for strcpy
 #include <time.h>
-//#include <termios.h> //for stdin_set
-#include <sys/types.h>
-#include <signal.h>    //for SIGTERM
-#include <unistd.h>    //for fork and usleep
 #include <wiringPi.h>  //for digitalwrite
+#include <signal.h>    //for SIGTERM and kill
+#include <sys/types.h>
+#include "parse_json.h"
 #include "mashsteplist.h"
+#include "parse_json.h"
 #include "rasthelper.h"
 #include "temphelper.h"
 #include "heaterhelper.h"
+
 
 
 
@@ -102,12 +103,43 @@ int main(int argc, char *argv[])
     strcat(mash_step_file, ".msf");
     printf("mash step file is %s\n", mash_step_file);
 
+
+
+
+    while(0) {
+        //Variante 1: pass json file name
+        //            below filebase.json is parsed for recipe data using 'parse_json'
+        //            recipe data is contained in 'new_json_recipe'
+        //            parsed recipe data can be 
+        //             - written to msf file
+        //             - passed back to mashcontrol as struct listitem list
+        //             - or both (e.g. for documentation purposes)
+        char * json_file = (char*)malloc(100);
+        strcpy(json_file, filebase);
+        strcat(json_file, ".json");
+        printf("json recipe file  is %s\n", json_file);
+
+        struct listitem *new_json_recipe = NULL;
+        new_json_recipe = parse_json_recipe(json_file, 2);
+        printf("prining json-generated mash step list from mashcontrol:\n");
+        printRastList(new_json_recipe);
+        exit(0);
+    }
+
+
+
+    //Variante 2: pass msf file name
+    //  msf file is parsed for recipe data using 'read_msf_file'
+    struct listitem * head = NULL;
+    head = parse_msf_recipe(mash_step_file, head); //read_msf_file(mash_step_file, head);
+
+
+
+
     FILE * fp;
     fp = fopen(FILEOUT, "w");
     fprintf(fp, "Date/Time: Rast, Soll (°C), Ist (°C), Heizung?\n");
 
-
-    struct listitem * head = NULL; 
 
 //    head = create(60, 0, "Einmaischen");
 //    push(head, 57, 10, "Eiweissrast");
@@ -115,9 +147,6 @@ int main(int argc, char *argv[])
 //    push(head, 73, 20, "Verzuckerungsrast");
 //    push(head, 78,  0, "Abmaischen");
 
-
-
-    head = parse_msf_recipe(mash_step_file, head);
     printRastList(head);
 
     printf("\n\nstarting mash Process\n");
@@ -133,7 +162,6 @@ int main(int argc, char *argv[])
         currentRast = currentRast->next;
     }
     
-    // Heater off
-    setHeizungStatus("OFF");
     
+    cleanup(0);
 }
