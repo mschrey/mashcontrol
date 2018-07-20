@@ -45,7 +45,7 @@ void printRast(struct listitem *currentRast)
 }
 
 
-void printlist(struct listitem * head)
+void printRastList(struct listitem * head)
 {
     struct listitem *current = head;
     while(current != NULL) {
@@ -53,4 +53,34 @@ void printlist(struct listitem * head)
         current = current->next;
     }
 
+}
+
+
+struct listitem * parse_msf_recipe(char * filename, struct listitem * head)
+{
+    printf("reading from %s\n", filename);
+    FILE * filep = fopen(filename, "r");
+    char rastline[100];
+    char rast_name[30];
+    char * pch;
+    int rast_temp = 0;
+    int rast_duration = 0;
+    while(fgets(rastline, 100, filep) != NULL) {
+        if(rastline[0] != '#') {
+            pch = strtok(rastline, ", ");
+            strcpy(rast_name, pch);
+            pch = strtok(NULL, ", ");
+            rast_temp = atoi(pch);
+            pch = strtok(NULL, ", ");
+            rast_duration = atoi(pch);
+            printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
+            if(head == NULL)
+                head = create(rast_temp, rast_duration, rast_name);
+            else
+                push(head, rast_temp, rast_duration, rast_name);
+        } else {
+            printf("comment found\n");
+        }
+    }
+    return head;
 }

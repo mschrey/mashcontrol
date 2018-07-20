@@ -1,3 +1,6 @@
+#ifndef MASHSTEPLIST
+#define MASHSTEPLIST
+
 struct listitem {
     double temperature;
     int duration;
@@ -11,4 +14,8 @@ void push(struct listitem *head, double temperature, int duration, char * action
 
 void printRast(struct listitem *currentRast);
 
-void printlist(struct listitem * head);
+void printRastList(struct listitem * head);
+
+struct listitem * parse_msf_recipe(char * filename, struct listitem * head);
+
+#endif
