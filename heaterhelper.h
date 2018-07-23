@@ -5,9 +5,12 @@
 
 extern char *heaterStatus;
 
-extern const char *COMMAND_ON ;  //outlet A
-extern const char *COMMAND_OFF;  //outlet A
 
+struct heaterCtrl {
+    double status;
+    void (*setHeaterState)(double);
+    double (*getHeaterState)(void);
+};
 
 
 void setHeizungStatus(const char * status);

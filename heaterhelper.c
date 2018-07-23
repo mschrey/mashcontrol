@@ -1,26 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "heaterhelper.h"
-
+#include "heaterAbstraction.h"
+#include "heaterPWM.h"
+#include "heaterRCSwitch.h"
 
 char *heaterStatus = "OFF";
 
-const char *COMMAND_ON  = "/home/pi/raspberry-remote/send 11001 1 1 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
-const char *COMMAND_OFF = "/home/pi/raspberry-remote/send 11001 1 0 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
 
+//struct heaterCtrl myHeaterCtrl = PWMHeaterCtrl;
+struct heaterCtrl *myHeaterCtrl = &RCSwitchHeaterCtrl;
 
 
 void setHeizungStatus(const char * status)
 {
     if(strcmp(status, "ON") == 0) {
-        system(COMMAND_ON);
+        //system(COMMAND_ON);
+        myHeaterCtrl->setHeaterState(1);
         strcpy(heaterStatus, " ON");
     } else {
         system(COMMAND_OFF);
         strcpy(heaterStatus, "OFF");
     }
 }
+
 
