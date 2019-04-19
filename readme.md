@@ -26,6 +26,7 @@ git clone https://github.com/mschrey/mashcontrol.git
 git clone https://github.com/xkonni/raspberry-remote
 cd raspberry-remote
 make send
+cd ../mashcontrol
 gcc mashcontrol.c -o mashcontrol -lwiringPi
 ```
 manually change path to temperature sensor device file
