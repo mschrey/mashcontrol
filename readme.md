@@ -28,6 +28,7 @@ cd raspberry-remote
 make send
 cd ../mashcontrol
 gcc mashcontrol.c -o mashcontrol -lwiringPi
+sudo cp mashcontrol_frontend/* /var/www/html/
 ```
 manually change path to temperature sensor device file
 add `dtoverlay=w1-gpio,gpiopin=4` to `/boot/config.txt`
@@ -38,7 +39,16 @@ make
 
 
 ## Information ##
-As of version v0.5, it is not necessary anymore to define the mash steps in the source code. Instead, a php web front end has been developed. Here, the mash steps can be easily defined. By clicking "start mash control", a mash step file (.msf) is created. Afterwards the mash control c binary is started with the name of the mash step file as the parameter. 
+As of version v0.5, it is not necessary anymore to define the mash steps in the source code. Instead, a php web front end has been developed. Here, the mash steps can be easily defined. By clicking "start Mashcontrol", a mash step file (.msf) is created. Afterwards the Mashcontrol binary is started with the name of the mash step file as the parameter. 
+
+Use the Mashcontrol web frontend as follows:
+1. Direct your browser to <ip_of_RaspberryPi>/mashcontrol.php
+2. Enter your desired recipe name at "Recipe Name".
+3. Activate and configure the mash steps as needed. 
+4. Finally click "start Mashcontrol"
+The binary is started and some rudimentary status information is output. Two times you have to interact with the UI:
+  * When the water temperature reached the mashin temperature, the temperature is kept until you added all the grist and acknowledge this by clicking "Continue"
+  * When the mashout time is reached, the mashout temperature is kept (usually 78°C) until you click "Continue". Afterwards the binary terminates.
 
 
 ## Outlook ##
