@@ -46,6 +46,7 @@ Use the Mashcontrol web frontend as follows:
 2. Enter your desired recipe name at "Recipe Name".
 3. Activate and configure the mash steps as needed. 
 4. Finally click "start Mashcontrol"
+
 The binary is started and some rudimentary status information is output. Two times you have to interact with the UI:
   * When the water temperature reached the mashin temperature, the temperature is kept until you added all the grist and acknowledge this by clicking "Continue"
   * When the mashout time is reached, the mashout temperature is kept (usually 78°C) until you click "Continue". Afterwards the binary terminates.

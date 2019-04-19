@@ -6,8 +6,8 @@
 <body>
 <h3>Mashcontrol - beta</h3>
 
-<form action="maischcontroller.php" method="get" >
-<p>Rezeptname:
+<form action="mashcontrol.php" method="get" >
+<p>Recipe Name:
 <input type="text" name="recipe_name">
 </p>
 
@@ -15,15 +15,15 @@
 <tr><td>
 Rast 1:
 <input type="checkbox" name="step1" value="Yes" checked="checked"> 
-<input type="hidden" name="step1_name" value="Einmaischen">
-Einmaischen: </td><td>Temperatur <input type="text" name="step1_temp" value="60" size="5">&deg;C</td><td>
+<input type="hidden" name="step1_name" value="MashIn">
+Mash In: </td><td>Temperature <input type="text" name="step1_temp" value="60" size="5">&deg;C</td><td>
 <input type="hidden" name="step1_duration" value="0"></td></tr>
 
 <tr><td>
 Rast 2:
 <input type="checkbox" name="step2" value="Yes"> 
 <input type="hidden" name="step2_name" value="Eiweissrast">
-Eiweissrast: </td><td>Temperatur <input type="text" name="step2_temp" value="57" size="5">&deg;C</td><td>
+Eiweissrast: </td><td>Temperature <input type="text" name="step2_temp" value="57" size="5">&deg;C</td><td>
 Dauer:
 <select name="step2_duration">
 <option value="10">10</option>
@@ -47,7 +47,7 @@ Dauer:
 Rast 3:
 <input type="checkbox" name="step3" value="Yes" checked="checked"> 
 <input type="hidden" name="step3_name" value="Maltoserast">
-Maltoserast: </td><td>Temperatur <input type="text" name="step3_temp" value="63" size="5">&deg;C</td><td>
+Maltoserast: </td><td>Temperature <input type="text" name="step3_temp" value="63" size="5">&deg;C</td><td>
 Dauer:
 <select name="step3_duration">
 <option value="10">10</option>
@@ -71,7 +71,7 @@ Dauer:
 Rast 4:
 <input type="checkbox" name="step4" value="Yes"> 
 <input type="hidden" name="step4_name" value="Kombirast">
-Kombirast:  </td><td>Temperatur <input type="text" name="step4_temp" value="68" size="5">&deg;C</td><td>
+Kombirast:  </td><td>Temperature <input type="text" name="step4_temp" value="68" size="5">&deg;C</td><td>
 Dauer:
 <select name="step4_duration">
 <option value="10">10</option>
@@ -118,27 +118,27 @@ Dauer:
 <tr><td>
 Rast 6:
 <input type="checkbox" name="step6" value="Yes" checked="checked"> 
-<input type="hidden" name="step6_name" value="Abmaischen">
-Abmaischen:  </td><td>Temperatur <input type="text" name="step6_temp" value="78" size="5">&deg;C</td><td>
+<input type="hidden" name="step6_name" value="MashOut">
+Mash Out:  </td><td>Temperatur <input type="text" name="step6_temp" value="78" size="5">&deg;C</td><td>
 <input type="hidden" name="step6_duration" value="0"></td></tr>
 </table>
 
 
 <input type="hidden" name="function" value="start">
-<input type="submit" value="Start Maischcontroller">
+<input type="submit" value="Start Mashcontrol">
 </form>
 
 
-<form action="maischcontroller.php" method="get">
+<form action="mashcontrol.php" method="get">
 <input type="hidden" name="function" value="kill">
-<input type="submit" value="Kill Maischcontroller">
+<input type="submit" value="Kill Mashcontrol">
 </form>
 
 
 
 
 <?php
-include 'maischcontroller_include.php';
+include 'mashcontrol_inc.php';
 
 if (isset($_GET['recipe_name'])){
     $recipe_name = $_GET['recipe_name'];   
@@ -156,7 +156,7 @@ if (isset($_GET['recipe_name'])){
 
 
 
-echo "<form action=\"maischcontroller_status.php\" method=\"get\">
+echo "<form action=\"mashcontrol_status.php\" method=\"get\">
 <input type=\"hidden\" name=\"function\" value=\"status\">
 <input type=\"hidden\" name=\"logfile\" value=$logfile>
 <input type=\"submit\" value=\"Refresh Status\">
@@ -164,8 +164,8 @@ echo "<form action=\"maischcontroller_status.php\" method=\"get\">
 
 
     
-    fwrite($file, "# Maischprogramm fuer ".$recipe_name."\n");
-    fwrite($file, "# created by Maischcontroller web frontend on ".$date."\n");
+    fwrite($file, "# Mash programm for ".$recipe_name."\n");
+    fwrite($file, "# created by Mashcontrol web frontend on ".$date."\n");
     if ($_GET['step1'] == 'Yes') {
         print_step($_GET['step1_name'], $_GET['step1_temp'], $_GET['step1_duration'], $file);
     }
@@ -189,8 +189,8 @@ echo "<form action=\"maischcontroller_status.php\" method=\"get\">
 
 
     if (isset($_GET['function']) and $_GET['function'] == 'start'){
-        start_maischcontroller($path.$logfile);
-        echo "started maischcontroller binary!<br>";
+        start_mashcontrol($path.$logfile);
+        echo "started Mashcontrol binary!<br>";
 
     }
     
@@ -200,7 +200,7 @@ echo "<form action=\"maischcontroller_status.php\" method=\"get\">
 
 
 if (isset($_GET['function']) and $_GET['function'] == 'kill'){
-    exec('killall maischcontroller');
+    exec('killall mashcontrol');
     echo "killed the program<br>";
 }
 
