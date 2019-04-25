@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
     printf("\n\nstarting mash Process\n");
 
     struct listitem *currentRast = head;
+    setHeizungStatus("OFF");
     while(currentRast != NULL) {
         printRast(currentRast);
 
