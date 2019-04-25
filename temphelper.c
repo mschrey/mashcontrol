@@ -15,7 +15,7 @@ double get_temp(const char * sensor)
 {
     char temp_str1[20], temp_str2[10];
     char str_long[100];
-    int temp_millicelsius;
+    static int temp_millicelsius = 0;
     FILE * fh;
     fh = fopen(sensor, "r");
     if (fh != NULL) {
@@ -24,19 +24,16 @@ double get_temp(const char * sensor)
         fclose(fh);
         sprintf(temp_str2, temp_str1+2, 5);
         
-        temp_millicelsius = atoi(temp_str2);
-        return temp_millicelsius;
+        //temp_millicelsius = atoi(temp_str2);
     } else {
         printf("sensor %s not found\n", sensor);
-        return -1000;
+        temp_millicelsius = -1000;
     }
     
-/*
     //simulate heating for testing purposes
-    if(strcmp(heaterStatus, " ON") == 0) 
-        TEMP += 6;
+    if(strcmp(heaterStatus, " ON") == 0)
+        temp_millicelsius += 6000;
     else
-        TEMP -= 3;
-    return TEMP * 1000;
-*/
+        temp_millicelsius -= 3000;
+    return temp_millicelsius;
 }
