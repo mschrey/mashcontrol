@@ -27,12 +27,14 @@ function get_current_status($logfile)
         printf("%d => %s\n", $i, htmlspecialchars($string));
     }
     echo "</pre>\n";
-    echo "<hr>";    
+    echo "<hr>";   
+    return $output[9];
 }
 
 function start_mashcontrol($mashcontrol_logfile)
 {
-//  /home/pi/mashcontrol/mashcontrol /home/pi/mashcontrol/2018-03-06_test06 > /home/pi/mashcontrol/mashcontrol_console_output.txt 2>&1 & echo $! > /home/pi/mashcontrol/pidfile.txt
+//stdbuf solution for buffering issue taken from https://stackoverflow.com/questions/1429951/force-flushing-of-output-to-a-file-while-bash-script-is-still-running
+//  stdbuf -oL /home/pi/mashcontrol/mashcontrol /home/pi/mashcontrol/2018-03-06_test06 > /home/pi/mashcontrol/mashcontrol_console_output.txt 2>&1 & echo $! > /home/pi/mashcontrol/pidfile.txt
 
     global $path;
     $cmd = '/home/pi/mashcontrol/mashcontrol';
@@ -145,6 +147,74 @@ function print_get_request()
     echo "</pre>";
 }
 
+
+function getRastnameFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = explode(" ", $array[0]);    
+    $rastName = $array1[2];
+    return $rastName;
+}
+
+function getTempShouldFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = explode(": ", $array[1]);
+    $temp_should = floatval($array1[1]);
+    return $temp_should;
+}
+
+function getTempIsFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = explode(": ", $array[2]);
+    $temp_is = floatval($array1[1]);
+    return $temp_is;
+}
+
+function getHeaterStatusFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = explode(": ", $array[3]);
+    $heater_status = $array1[1];
+    return $heater_status;
+}
+
+function getRastDurationTotalFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = preg_split("/[\s]+/", $array[4]);  //use regex for second parsing due to possibility of two spaces
+    $rastDurationTotal = substr($array1[4], 0, 2);
+    return $rastDurationTotal;
+}
+
+function getRastDurationRemainingFromConsole($lastline)
+{
+    $array = explode(",", $lastline);
+    $array1 = preg_split("/[\s]+/", $array[4]);  //use regex for second parsing due to possibility of two spaces
+    $rastDurationRemaining = $array1[2];
+    return $rastDurationRemaining;
+}
+
+
+function parse_console_output($lastline) 
+{
+    $currentDate = date('Y-m-d');
+    if(strcmp(substr($lastline, 0, strlen($currentDate)),$currentDate) == 0) {
+        printf("Rastname is '%s'<br>\n", getRastnameFromConsole($lastline));
+        printf("solltemperatur is '%s'<br>\n", getTempShouldFromConsole($lastline));   
+        printf("isttemperatur is '%s'<br>\n", getTempIsFromConsole($lastline));   
+        printf("heater status is '%s'<br>\n", getHeaterStatusFromConsole($lastline));   
+
+        printf("found \"Noch\" at position %d<br>\n", strpos($lastline, " Noch "));
+        if(strpos($lastline, " Noch ") !== false) {
+            printf("Rast Duration total is '%s'<br>\n", getRastDurationTotalfromConsole($lastline));    
+            printf("Rast Duration remaining is '%s'<br>\n", getRastDurationRemainingFromConsole($lastline));    
+        } elseif (strpos($lastline, "Temperature reached") !== false) {
+            printf("user must click \"Continue\"!<br>\n");
+        }
+    }
+}
 
 function cleanup_recipe_name($name)
 {

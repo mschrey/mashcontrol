@@ -38,24 +38,11 @@ if(!is_running() and !isset($_GET['recipe_name'])) {
     draw_kill_button();
     draw_continue_button();
     
-    //determine most recently modified file ending with ".log". store filename in $latest_filename
-    $latest_ctime = 0;
-    $latest_filename = '';    
-    $d = dir($path);
-    while (false !== ($entry = $d->read())) {
-        $filepath = "{$path}/{$entry}";
-        $len = strlen($filepath);
-        // could do also other checks than just checking whether the entry is a file
-        if (is_file($filepath) && filectime($filepath) > $latest_ctime && (substr($filepath, $len-4) == ".log") ) {
-            $latest_ctime = filectime($filepath);
-            $latest_filename = $entry;
-        }
-    }
-    get_current_status($latest_filename);    
-    
     //do not use the above. 
     $latest_filename = "mashcontrol_console_output.txt";
-    get_current_status($latest_filename);
+    $lastline = get_current_status($latest_filename);
+    
+    parse_console_output($lastline);   
 } 
 
 
