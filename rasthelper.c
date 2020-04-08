@@ -44,7 +44,7 @@ void print_info(time_t starttime, struct listitem *currentRast, double currentTe
     get_time(time_string, starttime);
     double RastTemperature = currentRast->temperature;
     char *RastAction = currentRast->action;
-    printf("%s: %s, Soll: %5.2f°C, Ist: %5.2f°C, Heizung: %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
+    printf("%s: %s, Soll: %5.2f°C, Ist: %5.2f°C, Heizung: %s", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
     FILE * fp = fopen(FILEOUT, "a");
     fprintf(fp, "%s: %s, %5.2f, %5.2f, %s\n", time_string, RastAction, RastTemperature, currentTemp, heaterStatus);
     fclose(fp);
@@ -98,6 +98,7 @@ void Rast_heatup(struct listitem *currentRast)
     do {
         currentTemp = Rast_regulate(RastTemperature);
         print_info(starttime, currentRast, currentTemp);
+        printf("\n");
         usleep(TIMEOUT_RAST_HEATUP*1000000);    //wait TIMEOUT_RAST_HEATUP second
     } while(currentTemp < RastTemperature);
     setHeizungStatus("OFF");
@@ -120,7 +121,7 @@ void Rast_wait(struct listitem *currentRast)
             while(1) {
                 currentTemp = Rast_regulate(RastTemperature);
                 print_info(starttime, currentRast, currentTemp);
-                printf("Temperature reached, %s then press <Enter> to continue\n", currentRast->action);
+                printf(", Temperature reached, click [Continue]\n");
                 digitalWrite(BUZZER, 1);
                 usleep(2 * 1000000);
                 digitalWrite(BUZZER, 0);
@@ -130,8 +131,7 @@ void Rast_wait(struct listitem *currentRast)
             }
         } else {
             //parent process, pid contains child pid
-            printf("waiting for SIGUSR1\n");
-            while(WAIT_REQUIRED == 1) {}
+            while(WAIT_REQUIRED == 1) {}  //waiting for SIGUSR1
             kill(pid, SIGTERM);
             digitalWrite(BUZZER, 0);
         }
@@ -143,7 +143,7 @@ void Rast_wait(struct listitem *currentRast)
             currentTemp = Rast_regulate(RastTemperature);
             currentRastDuration = get_time(time_string, starttime)/60;
             print_info(starttime, currentRast, currentTemp);
-            printf("Noch %2ld von %2ldmin\n", RastDuration-currentRastDuration, RastDuration);
+            printf(", Noch %2ld von %2ldmin\n", RastDuration-currentRastDuration, RastDuration);
             fflush(NULL);  //flush all open files
             fflush(stdout);
             usleep(TIMEOUT_RAST_WAIT*1000000);      //wait TIMEOUT_RAST_WAIT second
