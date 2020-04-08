@@ -74,6 +74,7 @@ struct listitem * parse_msf_recipe(char * filename, struct listitem * head)
             pch = strtok(NULL, ", ");
             rast_duration = atoi(pch);
             printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
+
             if(head == NULL)
                 head = create(rast_temp, rast_duration, rast_name);
             else
