@@ -12,23 +12,12 @@ include 'mashcontrol_inc.php';
 
 $logfile = $_GET['logfile'];
 
-echo "<form action=\"mashcontrol_status.php\" method=\"get\">
-<input type=\"hidden\" name=\"function\" value=\"status\">
-<input type=\"hidden\" name=\"logfile\" value=$logfile>
-<input type=\"submit\" value=\"Refresh Status\">
-</form>";
+draw_refresh_button($logfile);
 
-echo "<form action=\"mashcontrol_status.php\" method=\"get\">
-<input type=\"hidden\" name=\"function\" value=\"kill\">
-<input type=\"hidden\" name=\"logfile\" value=$logfile>
-<input type=\"submit\" value=\"Kill mashcontrol\">
-</form>";
+draw_kill_button($logfile);
 
-echo "<form action=\"mashcontrol_status.php\" method=\"get\">
-<input type=\"hidden\" name=\"function\" value=\"continue\">
-<input type=\"hidden\" name=\"logfile\" value=$logfile>
-<input type=\"submit\" value=\"Continue\">
-</form>";
+draw_continue_button($logfile);
+
 
 if (isset($_GET['function']) and $_GET['function'] == 'status'){
    get_current_status($path.$_GET['logfile']);
