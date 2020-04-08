@@ -47,10 +47,12 @@ void printRast(struct listitem *currentRast)
 
 void printRastList(struct listitem * head)
 {
-    struct listitem *current = head;
-    while(current != NULL) {
-        printRast(current);
-        current = current->next;
+    printf("Listing all Rast steps: \n");
+    struct listitem *currentRast = head;
+    while(currentRast != NULL) {
+        printf("  Rast: %s (%dmin at %2.0f°C)\n", currentRast->action, currentRast->duration, currentRast->temperature);
+        //printRast(current);
+        currentRast = currentRast->next;
     }
 
 }
@@ -73,14 +75,13 @@ struct listitem * parse_msf_recipe(char * filename, struct listitem * head)
             rast_temp = atoi(pch);
             pch = strtok(NULL, ", ");
             rast_duration = atoi(pch);
-            printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
-
+            //printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
             if(head == NULL)
                 head = create(rast_temp, rast_duration, rast_name);
             else
                 push(head, rast_temp, rast_duration, rast_name);
         } else {
-            printf("comment found\n");
+            //printf("comment found\n");
         }
     }
     return head;
