@@ -24,7 +24,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  //for strcpy
+#include <unistd.h>
+#include <string.h>  //for strcpy, strlen
 #include <time.h>
 #include <wiringPi.h>  //for digitalwrite
 #include <signal.h>    //for SIGTERM and kill
@@ -69,6 +70,47 @@ void cont_mash_step(int b)
 }
 
 
+
+int exists(const char *fname)
+{
+    if (access(fname, F_OK) != -1) {
+        return 1;  // file exists
+    } else {
+        return 0;  // file doesn't exist
+    }
+}
+
+
+
+//checks and possibly modifies given filenames, if they exist already.
+char* check_filename(const char *fname)
+{
+    char* filename = malloc(strlen(fname)+5);
+    char buffer[10];
+    int counter = 0;
+    if(exists(fname)) {
+        strcpy(filename, fname);
+        strcat(filename, "_");
+        sprintf(buffer, "%03d", counter);
+        strcat(filename, buffer);
+        while(exists(filename)) {
+            counter++;
+            strcpy(filename, fname);
+            strcat(filename, "_");
+            sprintf(buffer, "%03d", counter);
+            strcat(filename, buffer);
+        }
+    } else {
+        strcpy(filename, fname);
+    }
+    printf("new filename is '%s'\n", filename);
+    return filename;
+}
+
+
+
+
+
 int main(int argc, char *argv[]) 
 {
     
@@ -95,6 +137,7 @@ int main(int argc, char *argv[])
     FILEOUT = (char*)malloc(100);
     strcpy(FILEOUT, filebase);
     strcat(FILEOUT, ".log");
+    FILEOUT = check_filename(FILEOUT);
     printf("output file name is %s\n", FILEOUT);
 
     //defining mash step file
