@@ -14,11 +14,15 @@ if (isset($_GET['function']) and $_GET['function'] == 'continue'){
 }
 
 
-if(!is_running() and !isset($_GET['recipe_name'])) {                 
-    //first page (landing page)
+if(!is_running() and !isset($_GET['recipe_name'])) { 
+    // **************************************************               
+    //     first page (landing page)
+    // **************************************************
     draw_recipe_form();
 } elseif (!is_running() and isset($_GET['recipe_name'])) {           
-    //second page, recipe info available, start binary
+    // **************************************************               
+    //     second page, recipe info available, start binary
+    // **************************************************               
     $recipe_name = $_GET['recipe_name'];   
     $date = date('Y-m-d');
     $filename = $date."_".cleanup_recipe_name($recipe_name).".msf";
@@ -34,13 +38,10 @@ if(!is_running() and !isset($_GET['recipe_name'])) {
     }
     echo "Please wait! You will be forwarded to the next page within 10 seconds...<br>\n";
 } elseif (is_running()) {           
-    //third page, binary is currently running.
-    draw_kill_button();
-    draw_continue_button();
-    
-    //do not use the above. 
-    $latest_filename = "mashcontrol_console_output.txt";
-    $lastline = get_current_status($latest_filename);
+    // **************************************************               
+    //      third page, binary is currently running.
+    // **************************************************
+    $lastline = get_current_status("mashcontrol_console_output.txt");
     
     parse_console_output($lastline);   
 } 

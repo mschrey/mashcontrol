@@ -8,9 +8,9 @@ function print_header()
     if ((is_running()) or (!is_running() and isset($_GET['recipe_name']))) {    
         header("Refresh:10; url=mashcontrol.php");
     }
-    echo "<html>\n";
+    echo "<!DOCTYPE html>\n";
     echo "<head>\n";
-    echo "<meta http-equiv=\"Content-Type\" content=\"text/html\"; charset=\"UTF-8\">\n";
+    echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n";
     echo "</head>\n";
     echo "\n";
     echo "<body>\n";
@@ -21,13 +21,14 @@ function get_current_status($logfile)
 {
     global $path;
     exec("tail $path$logfile", $output);
-    echo "<hr>";
-    echo "Status from $path$logfile: \n<pre>\n";    
+//    echo "<hr>";
+//    echo "Status from $path$logfile: \n";
+//    echo "<pre>\n";    
     foreach($output as $i => $string) {
-        printf("%d => %s\n", $i, htmlspecialchars($string));
+        printf("<!--%d => %s-->\n", $i, htmlspecialchars($string));
     }
-    echo "</pre>\n";
-    echo "<hr>";   
+//    echo "</pre>\n";
+//    echo "<hr>\n\n";   
     return $output[9];
 }
 
@@ -197,23 +198,50 @@ function getRastDurationRemainingFromConsole($lastline)
 }
 
 
+function newTableCell()
+{
+    printf("  </td><td width=\"25%%\" align=\"center\">\n");        
+}
+
 function parse_console_output($lastline) 
 {
     $currentDate = date('Y-m-d');
     if(strcmp(substr($lastline, 0, strlen($currentDate)),$currentDate) == 0) {
-        printf("Rastname is '%s'<br>\n", getRastnameFromConsole($lastline));
-        printf("solltemperatur is '%s'<br>\n", getTempShouldFromConsole($lastline));   
-        printf("isttemperatur is '%s'<br>\n", getTempIsFromConsole($lastline));   
-        printf("heater status is '%s'<br>\n", getHeaterStatusFromConsole($lastline));   
-
-        printf("found \"Noch\" at position %d<br>\n", strpos($lastline, " Noch "));
+        printf("<table width=\"100%%\" border=\"3\"><tr>\n");
+        
+        newTableCell();
+        printf("  <img src=\"questionmark.png\" height=\"170\"><br>\n");
+        printf("  Rastname:<br><font size=\"5\"><b>%s</b></font>\n", getRastnameFromConsole($lastline));
+        
+        newTableCell();
+        printf("  <img src=\"thermometer1.php?current=%d&max=%d\" height=\"170\" width=\"54\" alt=\"current temp, daily min/max\" title=\"current temp daily, min/max\" /><br>\n", round(getTempIsFromConsole($lastline)), getTempShouldFromConsole($lastline));
+        printf("  Soll: <font size=\"5\"><b>%s°C</b></font><br>\n", getTempShouldFromConsole($lastline));   
+        printf("  Ist: <font size=\"5\"><b>%s°C</b></font>\n", getTempIsFromConsole($lastline));   
+        
+        newTableCell();
         if(strpos($lastline, " Noch ") !== false) {
-            printf("Rast Duration total is '%s'<br>\n", getRastDurationTotalfromConsole($lastline));    
-            printf("Rast Duration remaining is '%s'<br>\n", getRastDurationRemainingFromConsole($lastline));    
+            printf("  <img src=\"hourglass.png\" height=\"170\"><br>\n");
+            printf("  Rast ongoing. <br><font size=\"5\"><b>%s of %smin</b></font><br> remaining\n", getRastDurationRemainingFromConsole($lastline), getRastDurationTotalfromConsole($lastline));                
         } elseif (strpos($lastline, "Temperature reached") !== false) {
-            printf("user must click \"Continue\"!<br>\n");
-        }
+            draw_continue_button();    
+            printf("  user must click \"Continue\"!<br>\n");            
+        }        
+        
+        newTableCell();
+        if(strcmp(getHeaterStatusFromConsole($lastline), "OFF") == 0) {
+            printf("  <img src=\"heater-off.png\" height=\"170\"><br>\n");
+        } else {
+            printf("  <img src=\"heater-on.png\"  height=\"170\"><br>\n");
+        }    
+        printf("  heater status: <br><font size=\"5\"><b>%s</b></font>\n", getHeaterStatusFromConsole($lastline));   
+                
+        printf("  </td>\n");                
+        printf("  </tr>\n</table>\n");
     }
+    
+    draw_kill_button();
+
+    
 }
 
 function cleanup_recipe_name($name)
@@ -231,11 +259,11 @@ function cleanup_recipe_name($name)
 
 function draw_continue_button()
 {
-    printf("<form action=\"mashcontrol.php\" method=\"get\">\n");
-    printf("<input type=\"hidden\" name=\"function\" value=\"continue\">\n");
-    //printf("<input type=\"hidden\" name=\"logfile\" value=%s>\n", $logfile);
-    printf("<input type=\"submit\" value=\"Continue\">\n");
-    printf("</form>\n");
+//    printf("<form action=\"mashcontrol.php\" method=\"get\">\n");
+//    printf("<input type=\"hidden\" name=\"function\" value=\"continue\">\n");
+//    printf("<input type=\"submit\" value=\"Continue\">\n");
+//    printf("</form>\n");
+    printf("<a href=\"mashcontrol.php?function=continue\"><img src=\"circular-arrow-leave.png\" height=\"170\"></a><br>\n");
 }
 
 
@@ -249,14 +277,6 @@ function draw_kill_button()
 }
 
 
-function draw_refresh_button($logfile)
-{
-    printf("<form action=\"mashcontrol.php\" method=\"get\">\n");
-    printf("<input type=\"hidden\" name=\"function\" value=\"status\">\n");
-    printf("<input type=\"hidden\" name=\"logfile\" value=%s>\n", $logfile);
-    printf("<input type=\"submit\" value=\"Refresh Status\">\n");
-    printf("</form>\n");
-}
 
 
 function draw_recipe_form()
