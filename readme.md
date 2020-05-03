@@ -47,12 +47,12 @@ Use the Mashcontrol web frontend as follows:
 3. Activate and configure the mash steps as needed. 
 4. Finally click "start Mashcontrol"
 
-The binary is started and some rudimentary status information is output. Two times you have to interact with the UI:
+The binary is started and some status information is output. Two times you have to interact with the UI:
   * When the water temperature reached the mashin temperature, the temperature is kept until you added all the grist and acknowledge this by clicking "Continue"
   * When the mashout time is reached, the mashout temperature is kept (usually 78°C) until you click "Continue". Afterwards the binary terminates.
 
 To "install" the mashcontrol PHP web frontend, 
- * make sure you have apache2 and php installed and running. 
+ * make sure you have apache2 with php and GD installed and running. 
  * copy mashcontrol_frontend/* to /var/www/html
  * chmod 777 /home/pi/mashcontrol
  * sudo usermod -aG gpio www-data
