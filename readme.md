@@ -18,7 +18,7 @@ Mashcontrol is run on a Raspberry Pi (any model). It reads the mash tun temperat
  * Connecto GND of radio transmitter to Raspberry Pin 6 (GND)
 
 ## Software Dependencies ##
-``sudo apt-get install build-essential gcc git wiringpi apache2 php``
+``sudo apt-get install build-essential gcc git wiringpi apache2 php php-gd``
 
 ## Installation ##
 ```
