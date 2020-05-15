@@ -27,8 +27,12 @@ git clone https://github.com/xkonni/raspberry-remote
 cd raspberry-remote
 make send
 cd ../mashcontrol
-gcc mashcontrol.c -o mashcontrol -lwiringPi
-sudo cp mashcontrol_frontend/* /var/www/html/
+make
+cp mashcontrol_frontend/* /var/www/html/
+cd ..
+sudo chmod 775 mashcontrol
+sudo chmod 775 mashcontrol/mashcontrol
+sudo usermod -a -G pi www-data
 ```
 manually change path to temperature sensor device file
 add `dtoverlay=w1-gpio,gpiopin=4` to `/boot/config.txt`
@@ -54,8 +58,8 @@ The binary is started and some status information is output. Two times you have 
 To "install" the mashcontrol PHP web frontend, 
  * make sure you have apache2 with php and GD installed and running. 
  * copy mashcontrol_frontend/* to /var/www/html
- * chmod 777 /home/pi/mashcontrol
- * sudo usermod -aG gpio www-data
+ * chmod 775 /home/pi/mashcontrol
+ * sudo usermod -aG pi www-data
  
 ## Outlook ##
   * Control heating element of mash tun using PWM (in preparation)
