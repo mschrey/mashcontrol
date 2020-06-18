@@ -207,4 +207,5 @@ int main(int argc, char *argv[])
     
     
     cleanup(0);
+    return 0;
 }

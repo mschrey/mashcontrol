@@ -94,6 +94,9 @@ function write_msf_file($filename, $myGET)
 function get_pid()
 {
     global $path;
+    if(!(file_exists($path."pidfile.txt"))) {
+        return 0;   //pidfile.txt does not exist. mashcontrol binary was never executed on this computer
+    }
     $file = fopen($path."pidfile.txt", "r");
     if ($file == false) {
         echo "Error opening file pidfile.txt! Exiting!";
@@ -122,8 +125,12 @@ function send_sigusr1_signal()
 function is_running()
 {
     $pid = get_pid();
-
-    $res = file_exists("/proc/$pid/cmdline");
+    if ($pid != 0) {
+        $res = file_exists("/proc/$pid/cmdline");
+        return $res;
+    } else {
+        return false;
+    }
     //if($res) {
     //    echo "mashcontrol is running<br>";
     //} else {
