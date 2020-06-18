@@ -168,11 +168,11 @@ struct listitem * parse_json_recipe(char *filein, int outmode) {
     for (i = 1; i < r; i++) {
         if (jsoneq(jsonfile, &t[i], "Infusion_Einmaischtemperatur") == 0) {
             temperature = atoi(strndup(jsonfile + t[i+1].start, t[i+1].end - t[i+1].start));
-            head = create(temperature, 0, "Einmaischen");
+            head = mashsteplist_create(temperature, 0, "Einmaischen");
             i++;
         } else if(jsoneq(jsonfile, &t[i], "Abmaischtemperatur") == 0) {
             temperature = atoi(strndup(jsonfile + t[i+1].start, t[i+1].end - t[i+1].start));
-            push(head, temperature, 0, "Abmaischen");
+            mashsteplist_push(head, temperature, 0, "Abmaischen");
             i++;
         } else {
             for(j=0;j<NumberOfMashSteps;j++) {
@@ -186,7 +186,7 @@ struct listitem * parse_json_recipe(char *filein, int outmode) {
                 }
                 if (duration != 0 && temperature != 0) {
                     temperature2mashname(buf, temperature);
-                    push(head, temperature, duration, buf);
+                    mashsteplist_push(head, temperature, duration, buf);
                     duration = 0;
                     temperature = 0;
                 }

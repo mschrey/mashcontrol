@@ -8,7 +8,7 @@
 #include "mashsteplist.h"
 #include "rasthelper.h"
 #include "temphelper.h"
-
+#include "onewirediscover.h"
 
 
 char * FILEOUT;
@@ -52,27 +52,14 @@ void print_info(time_t starttime, struct listitem *currentRast, double currentTe
 
 
 
-/*
-//this executes one control step, e.g. turns heater on or off
-//input is desired temperature, output is actual temperature
-double Rast_regulate(double RastTemperature)
-{
-    double currentTemp = get_temp(SENSOR4)/1000;
-    //double currentTemp = get_temp(SENSOR1)/1000;
-    if(currentTemp < (RastTemperature-HYSTERESIS))
-        setHeizungStatus("ON");
-    else if(currentTemp > RastTemperature)
-        setHeizungStatus("OFF");
-    return currentTemp;
-}
-*/
-
 // Bang bang PD controller
 // Executes one control step, returns current temperature
 // Designed for a sample time of 11 seconds
 double Rast_regulate( double RastTemperature )
 {
-    double y = get_temp(SENSOR4) / 1000;    // Get plant output
+    char *SENSOR = malloc(80);
+    SENSOR = tempsensor_init();
+    double y = get_temp(SENSOR) / 1000;    // Get plant output
     double e = RastTemperature - y;         // Calculate control error
     double eFilt = e * (1 - memFac ) + ePrev * memFac;    // Calculate filtered control error
     double uVirt = e * Kp + Kd * ( e - eFilt );           // Calculate virtual plant input

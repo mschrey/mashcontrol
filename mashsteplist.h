@@ -8,9 +8,9 @@ struct listitem {
     struct listitem * next;
 };
 
-struct listitem * create(double temperature, int duration, char * action);
+struct listitem * mashsteplist_create(double temperature, int duration, char * action);
 
-void push(struct listitem *head, double temperature, int duration, char * action);
+void mashsteplist_push(struct listitem *head, double temperature, int duration, char * action);
 
 void printRast(struct listitem *currentRast);
 

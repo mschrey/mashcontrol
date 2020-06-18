@@ -1,0 +1,4 @@
+/sys/bus/w1/devices/10-000802f7cdae/w1_slave,1
+/sys/bus/w1/devices/10-000802f89e49/w1_slave,2
+/sys/bus/w1/devices/10-0008032e3d80/w1_slave,Luft
+/sys/bus/w1/devices/28-0316a4a4eaff/w1_slave,watertight

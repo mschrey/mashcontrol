@@ -36,7 +36,7 @@
 #include "rasthelper.h"
 #include "temphelper.h"
 #include "heaterhelper.h"
-
+#include "onewirediscover.h"
 
 
 
@@ -175,7 +175,6 @@ int main(int argc, char *argv[])
     //  msf file is parsed for recipe data using 'read_msf_file'
     struct listitem * head = NULL;
     head = parse_msf_recipe(mash_step_file, head); //read_msf_file(mash_step_file, head);
-
 
 
 

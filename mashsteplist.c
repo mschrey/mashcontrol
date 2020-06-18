@@ -6,7 +6,7 @@
 
 
 
-struct listitem * create(double temperature, int duration, char * action)
+struct listitem * mashsteplist_create(double temperature, int duration, char * action)
 {
     struct listitem * head = malloc(sizeof(struct listitem));
     head->temperature = temperature;
@@ -18,7 +18,7 @@ struct listitem * create(double temperature, int duration, char * action)
 }
 
 
-void push(struct listitem *head, double temperature, int duration, char * action)
+void mashsteplist_push(struct listitem *head, double temperature, int duration, char * action)
 {
     struct listitem *new = malloc(sizeof(struct listitem));
     new->temperature = temperature;
@@ -77,9 +77,9 @@ struct listitem * parse_msf_recipe(char * filename, struct listitem * head)
             rast_duration = atoi(pch);
             //printf("rast found -> name:%s, temperature:%d°C, duration:%dmin\n", rast_name, rast_temp, rast_duration);
             if(head == NULL)
-                head = create(rast_temp, rast_duration, rast_name);
+                head = mashsteplist_create(rast_temp, rast_duration, rast_name);
             else
-                push(head, rast_temp, rast_duration, rast_name);
+                mashsteplist_push(head, rast_temp, rast_duration, rast_name);
         } else {
             //printf("comment found\n");
         }
