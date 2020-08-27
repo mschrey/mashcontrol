@@ -68,6 +68,8 @@ To "install" the mashcontrol PHP web frontend,
   * Beautify web front end, possibly including live plotting of temperature. 
   * Automatically detect temperature sensor (no more hardcoding)
 
+## Temperature sensors ##
+Temperature sensors are detected automatically. Mashcontrol requires only a single sensor. If only a single sensor is connected to the Raspberry Pi, this sensor is used. If several sensors are connected, the sensor with label 'watertight' is used. For this second step, the file 'tempsensorlabels.txt' is needed with the correct sensor IDs. It is planned to do some code reuse with https://github.com/mschrey/fermentcontrol where several temperature sensors are needed.
 
 ## Troubleshooting ##
  * Sensors cannot be found  
